@@ -1,0 +1,23 @@
+<data name="CustomerDataService" serviceNamespace="" serviceGroup="" transports="http https"       disableStreaming="true">
+    <description/>
+  <config id="CustomerDataSource" >
+    <property name="driverClassName">org.postgresql.Driver</property>
+    <property name="url">jdbc:postgresql://localhost:5432/niira</property>
+    <property name="username">postgres</property>
+    <property name="password">postgres</property>
+    </config>
+    <query id="get_citizennin_query" useConfig="CustomerDataSource">
+        <sql>SELECT EXISTS ( SELECT 1 FROM identity_cards WHERE nin =:nin ) AS nin</sql>
+        <param name="nin" paramType="SCALAR" sqlType="STRING" type="IN"/>
+        <properties>
+            <property name="fetchDirection">forward</property>
+            <property name="forceStoredProc">false</property>
+            <property name="forceJDBCBatchRequests">false</property>
+        </properties>
+    </query>
+    <resource method="GET" path="Citizen/{NIN}" disableStreaming="true">
+        <call-query href="get_citizennin_query">
+            <with-param name="nin" query-param="NIN"/>
+        </call-query>
+    </resource>
+</data>

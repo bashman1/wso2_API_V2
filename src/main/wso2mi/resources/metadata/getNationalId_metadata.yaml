@@ -1,0 +1,10 @@
+---
+key: "getNationalId-1.0.0"
+name : "getNationalId"
+displayName : "getNationalId"
+description: "getNationalId"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/getnationalid"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

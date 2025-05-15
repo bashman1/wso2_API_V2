@@ -1,0 +1,10 @@
+---
+key: "CreateNationalId-1.0.0"
+name : "CreateNationalId"
+displayName : "CreateNationalId"
+description: "CreateNationalId"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/createnationalid"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/wso2apidemo" name="Wso2APIDemo" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/createCustomer">
+        <inSequence>
+            <!-- checking for the nin from niira -->
+            <!-- <property name="nin" expression="json-eval($.nin)" scope="default"/> -->
+            <property name="nin" expression="json-eval($.nin)" scope="default"/>
+            <!-- <dblookup>
+                <connection>
+                    <pool>
+                        <driver>org.postgresql.Driver</driver>
+                        <url>jdbc:postgresql://localhost:5432/niira?currentSchema=public</url>
+                        <user>postgres</user>
+                        <password>postgres</password>
+                        <property name="validationquery" value=""/>
+                    </pool>
+                </connection>
+                <statement>
+                    <sql>SELECT EXISTS (
+                        SELECT 1 FROM identity_cards WHERE nin = ?
+                        ) AS nin_exists</sql>
+                    <parameter expression="$ctx:nin" type="VARCHAR"/>
+                    <result column="nin_exists" name="result_id"/>
+                </statement>
+            </dblookup> -->
+            <!-- <http.get configKey="DataService">
+                <relativePath>services/CustomerDataService/Citizen/{$ctx:nin}
+                </relativePath>
+                <headers>[["Accept","application/json"],]</headers>
+                <forceScAccepted>false</forceScAccepted>
+                <disableChunking>false</disableChunking>
+                <forceHttp10>false</forceHttp10>
+                <noKeepAlive>false</noKeepAlive>
+                <responseVariable>http_get_1</responseVariable>
+                <overwriteBody>true</overwriteBody>
+            </http.get> -->
+            <!-- Data service start -->
+            <!-- /Data service start -->
+            <!-- <property name="result_id" expression="json-eval($.result.nin)" scope="default"/> -->
+            <!-- Add Accept header -->
+            <header name="Accept" value="application/json" scope="transport"/>
+            <!-- Call DataService endpoint -->
+            <call>
+                <endpoint>
+                    <http uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX8" method="GET"/>
+                </endpoint>
+            </call>
+            <!-- Create full URL in a property -->
+            <!-- <property name="data_service_url" expression="fn:concat('http://localhost:8290/services/CustomerDataService/Citizen/', $ctx:nin)" scope="default" type="STRING"/> -->
+            <!-- <property name="data_service_url" expression="fn:concat('http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX8')" scope="default" type="STRING"/> -->
+
+            <!-- Call DataService endpoint -->
+            <!-- <call>
+                <endpoint>
+                    <http uri-template="{$ctx:data_service_url}" method="GET"/>
+                </endpoint>
+            </call> -->
+            <!-- Extract result from response body -->
+            <property name="result_id" expression="json-eval($.result.nin)" scope="default"/>
+            <log level="full">
+                <property name="nin-value" expression="$ctx:nin"/>
+            </log>
+            <filter xpath="string($ctx:result_id) = 'true'">
+                <then>
+                    <enrich>
+                        <source clone="true" type="body"/>
+                        <target type="property" property="origPayload"/>
+                    </enrich>
+                    <enrich>
+                        <source type="property" property="origPayload"/>
+                        <target type="body"/>
+                    </enrich>
+                    <!-- correct nin -->
+                    <variable name="post_data" type="JSON" expression="${payload}"/>
+                    <http.post configKey="wso2DemoApi">
+                        <relativePath>/createCustomer</relativePath>
+                        <headers>[]</headers>
+                        <requestBodyType>JSON</requestBodyType>
+                        <requestBodyJson>${payload}</requestBodyJson>
+                        <forceScAccepted>false</forceScAccepted>
+                        <disableChunking>false</disableChunking>
+                        <forceHttp10>false</forceHttp10>
+                        <noKeepAlive>false</noKeepAlive>
+                        <forcePostPutNobody>false</forcePostPutNobody>
+                        <responseVariable>customerres</responseVariable>
+                        <overwriteBody>true</overwriteBody>
+                    </http.post>
+                    <property scope="default" type="STRING" name="HTTP_STATUS_CODE" expression="get-property('axis2', 'HTTP_SC')"/>
+                    <log level="full">
+                        <property expression="get-property('HTTP_STATUS_CODE')" name="HTTP status code received: "/>
+                    </log>
+                    <variable name="customer_created" type="JSON" expression="${payload}"/>
+                    <filter xpath="get-property('HTTP_STATUS_CODE') = '201'">
+                        <then>
+                            <!-- call the next api -->
+                            <payloadFactory media-type="json" template-type="default">
+                                <format>{
+                                    "currency": "UGX",
+                                    "customer_email":${payload.email},
+                                    "account_title":${payload.firstName}
+                                    }
+                                </format>
+                            </payloadFactory>
+                            <http.post configKey="wso2DemoApi">
+                                <relativePath>/createAccount</relativePath>
+                                <headers>[]</headers>
+                                <requestBodyType>JSON</requestBodyType>
+                                <requestBodyJson>${payload}</requestBodyJson>
+                                <forceScAccepted>false</forceScAccepted>
+                                <disableChunking>false</disableChunking>
+                                <forceHttp10>false</forceHttp10>
+                                <noKeepAlive>false</noKeepAlive>
+                                <forcePostPutNobody>false</forcePostPutNobody>
+                                <responseVariable>http_post_1</responseVariable>
+                                <overwriteBody>true</overwriteBody>
+                            </http.post>
+                            <property scope="default" type="STRING" name="HTTP_STATUS_CODE" expression="get-property('axis2', 'HTTP_SC')"/>
+                            <!-- start of the second if loop -->
+                            <filter xpath="get-property('HTTP_STATUS_CODE') = '201'">
+                                <then>
+                                    <variable name="account_number" type="STRING" expression="${payload.accountNumber}"/>
+                                    <payloadFactory media-type="json" template-type="default">
+                                        <format>{
+                                            "account_number": ${payload.accountNumber}
+                                            } </format>
+                                    </payloadFactory>
+                                    <http.post configKey="wso2DemoApi">
+                                        <relativePath>/activateAccount</relativePath>
+                                        <headers>[]</headers>
+                                        <requestBodyType>JSON</requestBodyType>
+                                        <requestBodyJson>${payload}</requestBodyJson>
+                                        <forceScAccepted>false</forceScAccepted>
+                                        <disableChunking>false</disableChunking>
+                                        <forceHttp10>false</forceHttp10>
+                                        <noKeepAlive>false</noKeepAlive>
+                                        <forcePostPutNobody>false</forcePostPutNobody>
+                                        <responseVariable>http_post_2</responseVariable>
+                                        <overwriteBody>true</overwriteBody>
+                                    </http.post>
+                                    <!-- start of the Third if loop  -->
+                                    <property scope="default" type="STRING" name="HTTP_STATUS_CODE" expression="get-property('axis2', 'HTTP_SC')"/>
+                                    <filter xpath="get-property('HTTP_STATUS_CODE') = '200'">
+                                        <then>
+                                            <payloadFactory media-type="json" template-type="default">
+                                                <format>{
+                                                    "account_number": ${vars.account_number},
+                                                    "amount": ${vars.post_data.amount},
+                                                    "depositor_name": "Test User",
+                                                    "depositor_phone":"0758479763",
+                                                    "transaction_narration":"Hello there"
+                                                    }
+                                                </format>
+                                            </payloadFactory>
+                                            <!-- Depoit cash to the activated account -->
+                                            <http.post configKey="wso2DemoApi">
+                                                <relativePath>/deposit</relativePath>
+                                                <headers>[]</headers>
+                                                <requestBodyType>JSON</requestBodyType>
+                                                <requestBodyJson>${payload}</requestBodyJson>
+                                                <forceScAccepted>false</forceScAccepted>
+                                                <disableChunking>false</disableChunking>
+                                                <forceHttp10>false</forceHttp10>
+                                                <noKeepAlive>false</noKeepAlive>
+                                                <forcePostPutNobody>false</forcePostPutNobody>
+                                                <responseVariable>http_post_3</responseVariable>
+                                                <overwriteBody>true</overwriteBody>
+                                            </http.post>
+                                            <sequence xmlns="http://ws.apache.org/ns/synapse" name="sample_sequence">
+                                                <!-- <in> -->
+                                                <payloadFactory media-type="json" template-type="default">
+                                                    <format>
+                                                        {
+                                                        "request": ${vars.post_data},
+                                                        "created_customer": ${vars.customer_created},
+                                                        "account_created": ${vars.account_number},
+                                                        "response": ${payload}
+                                                        }
+                                                    </format>
+                                                </payloadFactory>
+                                                <respond/>
+                                                <!-- </in> -->
+                                            </sequence>
+                                        </then>
+                                        <else>
+                                            <!-- Return error message -->
+                                            <payloadFactory media-type="json" template-type="default">
+                                                <format>
+                                                    {
+                                                    "status": "FAILED",
+                                                    "message": "Deposit process failed",
+                                                    "details": ${payload}
+                                                    }
+                                                </format>
+                                            </payloadFactory>
+                                            <respond/>
+                                            <!-- /end Return error message -->
+                                        </else>
+                                    </filter>
+                                </then>
+                                <else>
+                                    <!-- Return error message -->
+                                    <payloadFactory media-type="json" template-type="default">
+                                        <format>
+                                            {
+                                            "status": "FAILED",
+                                            "message": "Account creation failed",
+                                            "details": ${payload}
+                                            }
+                                        </format>
+                                    </payloadFactory>
+                                    <respond/>
+                                    <!-- /end Return error message -->
+                                </else>
+                            </filter>
+                            <!-- /end call the next api -->
+                        </then>
+                        <else>
+                            <!-- Return error message -->
+                            <payloadFactory media-type="json" template-type="default">
+                                <format>
+                                    {
+                                    "status": "FAILED",
+                                    "message": "Customer creation failed",
+                                    "details": ${payload}
+                                    }
+                                </format>
+                            </payloadFactory>
+                            <respond/>
+                            <!-- /end Return error message -->
+                        </else>
+                    </filter>
+                </then>
+                <else>
+                    <!-- Return error message -->
+                    <payloadFactory media-type="json" template-type="default">
+                        <format> { "status": "FAILED", "message": "Invalid nin number" } </format>
+                    </payloadFactory>
+                    <respond/>
+                </else>
+            </filter>
+            <!-- /end checking for the nin from niira -->
+        </inSequence>
+        <!-- <faultSequence>
+            <log level="full">
+                <property name="ERROR" expression="get-property('ERROR_MESSAGE')"/>
+            </log>
+            <payloadFactory media-type="json">
+                <format>
+                    {
+                    "status": "FAILED",
+                    "message": "Connection failure. system is unavailable",
+                    }
+                </format>
+                <args/>
+            </payloadFactory>
+            <property name="HTTP_SC" value="500" scope="axis2"/>
+            <respond/>
+        </faultSequence> -->
+        <faultSequence xmlns="http://ws.apache.org/ns/synapse">
+            <log level="full">
+                <property name="ERROR_MESSAGE" expression="get-property('ERROR_MESSAGE')"/>
+                <property name="ERROR_EXCEPTION" expression="get-property('ERROR_EXCEPTION')"/>
+                <property name="ERROR_DETAIL" expression="get-property('ERROR_DETAIL')"/>
+            </log>
+            <payloadFactory media-type="json">
+                <format> { "status": "FAILED", "message": "Connection failure. System is unavailable.", <!-- "error": $ctx:ERROR_MESSAGE,
+                    "detail": $ctx:ERROR_DETAIL --> } </format>
+                <args/>
+            </payloadFactory>
+            <property name="HTTP_SC" value="500" scope="axis2"/>
+            <respond/>
+        </faultSequence>
+    </resource>
+</api>

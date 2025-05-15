@@ -1,0 +1,41 @@
+{
+  "type": "API",
+  "/": {
+    "requests": [
+      {
+        "name": "request",
+        "contentType": "application/json",
+        "content": {
+          "first_name": "Donxy",
+          "last_name": "Jonxy",
+          "email": "bash12@gmail.com",
+          "phone_number": "0758479765",
+          "address": "Kololo",
+          "nin": "CM901245K8792DJ"
+        },
+        "queryParams": {},
+        "pathParams": {}
+      }
+    ],
+    "defaultRequest": "request"
+  },
+  "/createCustomer": {
+    "requests": [
+      {
+        "name": "request",
+        "contentType": "application/json",
+        "content": {
+          "first_name": "Donxy",
+          "last_name": "Jonxy",
+          "email": "bash12@gmail.com",
+          "phone_number": "0758479765",
+          "address": "Kololo",
+          "nin": "CM901245K8792DJ"
+        },
+        "queryParams": {},
+        "pathParams": {}
+      }
+    ],
+    "defaultRequest": "request"
+  }
+}

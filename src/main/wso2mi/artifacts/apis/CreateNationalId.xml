@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/createnationalid" name="CreateNationalId" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/">
+        <inSequence>
+            <!-- Log the incoming request -->
+            <log level="custom">
+                <property name="Message" value="Received request to create national ID"/>
+            </log>
+            <!-- Extract JSON payload -->
+            <property name="jsonPayload" expression="json-eval($.)"/>
+            <property name="surname" expression="json-eval($.surname)"/>
+            <property name="first_name" expression="json-eval($.first_name)"/>
+            <property name="last_name" expression="json-eval($.last_name)"/>
+            <property name="other_name" expression="json-eval($.other_name)"/>
+            <property name="date_of_birth" expression="json-eval($.date_of_birth)"/>
+            <property name="district" expression="json-eval($.district)"/>
+            <property name="county" expression="json-eval($.county)"/>
+            <property name="sub_county" expression="json-eval($.sub_county)"/>
+            <property name="parish" expression="json-eval($.parish)"/>
+            <property name="village" expression="json-eval($.village)"/>
+            <property name="expiry_date" expression="json-eval($.expiry_date)"/>
+            <dblookup>
+                <connection>
+                    <pool>
+                        <driver>org.postgresql.Driver</driver>
+                        <url>jdbc:postgresql://localhost:5432/niira</url>
+                        <user>postgres</user>
+                        <password>postgres</password>
+                    </pool>
+                </connection>
+                <statement>
+                    <sql>
+                        INSERT INTO identity_cards (
+                        surname, first_name, last_name, other_name, date_of_birth,
+                        district, county, sub_county, parish, village, expiry_date
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        RETURNING *
+                    </sql>
+                    <parameter expression="$ctx:surname" type="VARCHAR"/>
+                    <parameter expression="$ctx:first_name" type="VARCHAR"/>
+                    <parameter expression="$ctx:last_name" type="VARCHAR"/>
+                    <parameter expression="$ctx:other_name" type="VARCHAR"/>
+                    <parameter expression="$ctx:date_of_birth" type="DATE"/>
+                    <parameter expression="$ctx:district" type="VARCHAR"/>
+                    <parameter expression="$ctx:county" type="VARCHAR"/>
+                    <parameter expression="$ctx:sub_county" type="VARCHAR"/>
+                    <parameter expression="$ctx:parish" type="VARCHAR"/>
+                    <parameter expression="$ctx:village" type="VARCHAR"/>
+                    <parameter expression="$ctx:expiry_date" type="DATE"/>
+                </statement>
+            </dblookup>
+            <!-- Respond with success -->
+            <sequence xmlns="http://ws.apache.org/ns/synapse" name="main">
+                <!-- Construct the response payload -->
+                <payloadFactory media-type="json">
+                    <format>{"status":"success","message":"National ID created successfully"
+                               "response": {
+                            "id": "$1",
+                            "surname": "$2",
+                            "first_name": "$3",
+                            "last_name": "$4",
+                            "other_name": "$5",
+                            "date_of_birth": "$6",
+                            "district": "$7",
+                            "county": "$8",
+                            "sub_county": "$9",
+                            "parish": "$10",
+                            "village": "$11",
+                            "expiry_date": "$12",
+                            "nin": "$13"
+                        }}</format>
+                    <!-- <args/> -->
+                    <args>
+                    <arg expression="$ctx:id"/>
+                    <arg expression="$ctx:surname"/>
+                    <arg expression="$ctx:first_name"/>
+                    <arg expression="$ctx:last_name"/>
+                    <arg expression="$ctx:other_name"/>
+                    <arg expression="$ctx:date_of_birth"/>
+                    <arg expression="$ctx:district"/>
+                    <arg expression="$ctx:county"/>
+                    <arg expression="$ctx:sub_county"/>
+                    <arg expression="$ctx:parish"/>
+                    <arg expression="$ctx:village"/>
+                    <arg expression="$ctx:expiry_date"/>
+                    <arg expression="$ctx:nin"/>
+                </args>
+                </payloadFactory>
+                <!-- Send the response back to the client -->
+                <respond/>
+            </sequence>
+        </inSequence>
+        <faultSequence>
+            <!-- Log error -->
+            <log level="custom">
+                <property name="Error" value="Failed to create national ID"/>
+                <property name="ErrorMessage" expression="$ctx:ERROR_MESSAGE"/>
+            </log>
+            <!-- Respond with error -->
+            <payloadFactory media-type="json">
+                <format>{"status":"error","message":"$1"}</format>
+                <args>
+                    <arg expression="$ctx:ERROR_MESSAGE"/>
+                </args>
+            </payloadFactory>
+            <respond/>
+        </faultSequence>
+    </resource>
+</api>

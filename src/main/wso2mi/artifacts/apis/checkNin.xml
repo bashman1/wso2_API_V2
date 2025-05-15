@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/checknin" name="checkNin" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET" uri-template="/">
+        <inSequence>
+
+            <dblookup>
+                <connection>
+                    <pool>
+                        <driver>org.postgresql.Driver</driver>
+                        <url>jdbc:postgresql://localhost:5432/niira?currentSchema=public</url>
+                        <user>postgres</user>
+                        <password>postgres</password>
+                    </pool>
+                </connection>
+                <statement>
+                    <sql>
+                        SELECT EXISTS (
+                        SELECT 1 FROM identity_cards WHERE nin = 'CMRSOE3VZX3CRX'
+                        ) AS nin
+                    </sql>
+                    <!-- <parameter expression="$ctx:query.nin" type="VARCHAR"/> -->
+                    <result name="result_id" column="nin"/>
+                </statement>
+            </dblookup>
+
+                        <!-- <filter xpath="$ctx:result_id=true "> -->
+               <filter xpath="string($ctx:result_id) = 'true'">
+                <then>
+                    <log level="full">
+                        <property expression="$ctx:result_id" name="Database results successfully: "/>
+                    </log>
+                </then>
+                <else>
+                    <log level="full">
+                        <property expression="$ctx:result_id" name="Database results unsuccessfully: "/>
+                    </log>
+                </else>
+            </filter>
+            <!-- /end checking for the nin from niira -->
+
+
+            <!-- <log level="custom">
+                <property name="Full DB ResultSet" expression="$ctx:result_id"/>
+                <property name="NIN Exists?" expression="$ctx:result_id"/>
+            </log> -->
+            <!-- Process the result set to determine if NIN exists -->
+            <script language="js">
+                <![CDATA[
+                    var ninExists = 'no';
+                    var resultSet = mc.getProperty('urn:org.apache.synapse:database:resultSet') || mc.getProperty('axis2:DB_RESULT');
+                    if (resultSet) {
+                        var iterator = resultSet.iterator();
+                        if (iterator.hasNext()) {
+                            ninExists = 'yes';
+                        }
+                    }
+                    mc.setProperty('nin_exists', ninExists);
+                    mc.setProperty('result_set_status', resultSet ? 'non-null' : 'null');
+                ]]>
+            </script>
+            <!-- Log the result -->
+            <payloadFactory media-type="json">
+                <format>
+                    {
+                    "status": "success",
+                    "message": "NIN check completed",
+                    "response": "$1"
+                    }
+                </format>
+                <args>
+                    <arg expression="$ctx:result_id"/>
+                </args>
+            </payloadFactory>
+            <!-- Send the response back to the client -->
+            <respond/>
+        </inSequence>
+        <faultSequence>
+            <!-- Log error -->
+            <!-- Respond with error -->
+            <payloadFactory media-type="json">
+                <format>{"status":"error","message":"$1"}</format>
+                <args>
+                    <arg expression="$ctx:ERROR_MESSAGE"/>
+                </args>
+            </payloadFactory>
+            <respond/>
+        </faultSequence>
+    </resource>
+</api>

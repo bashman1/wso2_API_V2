@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/testdblookup" name="testdblookup" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET" uri-template="/">
+        <inSequence>
+            <dblookup>
+                <connection>
+                    <pool>
+                        <driver>org.postgresql.Driver</driver>
+                        <url>jdbc:postgresql://localhost:5432/niira</url>
+                        <user>postgres</user>
+                        <password>postgres</password>
+                        <property name="validationquery" value=""/>
+                    </pool>
+                </connection>
+                <statement>
+                    <sql><![CDATA[SELECT surname, first_name, last_name, other_name, date_of_birth, district, county, sub_county, parish, village, expiry_date, nin, created_on FROM identity_cards]]></sql>
+                    <result column="surname" name="surname"/>
+                    <result column="first_name" name="first_name"/>
+                    <result column="last_name" name="last_name"/>
+                    <result column="other_name" name="other_name"/>
+                    <result column="date_of_birth" name="date_of_birth"/>
+                    <result column="district" name="district"/>
+                    <result column="county" name="county"/>
+                    <result column="sub_county" name="sub_county"/>
+                    <result column="nin" name="nin"/>
+                </statement>
+            </dblookup>
+            <log category="INFO" logMessageID="false" logFullPayload="false">
+                <message>${payload}</message>
+            </log>
+            <respond/>
+        </inSequence>
+        <faultSequence>
+        </faultSequence>
+    </resource>
+</api>

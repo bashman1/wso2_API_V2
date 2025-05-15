@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/getnationalid" name="getNationalId" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="GET" uri-template="/">
+        <inSequence>
+            <!-- Log the incoming request -->
+            <log level="custom">
+                <property name="Message" value="Received request to get all national IDs"/>
+            </log>
+            <!-- Query the identity_cards table -->
+            <dblookup>
+                <connection>
+                    <pool>
+                        <driver>org.postgresql.Driver</driver>
+                        <url>jdbc:postgresql://localhost:5432/niira?currentSchema=public</url>
+                        <user>postgres</user>
+                        <password>postgres</password>
+                        <property name="validationquery" value=""/>
+                    </pool>
+                </connection>
+                <statement>
+                    <sql><![CDATA[SELECT id, surname, first_name, last_name, other_name,                                 date_of_birth, district, county, sub_county, parish,                                 village, expiry_date                          FROM identity_cards]]></sql>
+                    <result column="id" name="result_id"/>
+                    <result column="surname" name="result_surname"/>
+                    <result column="first_name" name="result_first_name"/>
+                    <result column="last_name" name="result_last_name"/>
+                    <result column="other_name" name="result_other_name"/>
+                    <result column="date_of_birth" name="result_date_of_birth"/>
+                    <result column="district" name="result_district"/>
+                    <result column="county" name="result_county"/>
+                    <result column="sub_county" name="result_sub_county"/>
+                    <result column="parish" name="result_parish"/>
+                    <result column="village" name="result_village"/>
+                    <result column="expiry_date" name="result_expiry_date"/>
+                </statement>
+            </dblookup>
+            <!-- Log the query execution and result set -->
+            <log level="custom">
+                <property name="QueryResult" value="Executed query to retrieve national IDs"/>
+                <property name="LogIdResults" expression="get-property('result_id')"/>
+                <property name="district" expression="get-property('district')"/>
+                <property name="ResultSet" expression="get-property('urn:org.apache.synapse:database:resultSet')"/>
+            </log>
+            <!-- Use a script to process the result set into a JSON array -->
+            <script language="js">
+                <![CDATA[
+                    var results = [];
+                    var resultSet = mc.getProperty('urn:org.apache.synapse:database:resultSet') || mc.getProperty('axis2:DB_RESULT');
+                    if (resultSet) {
+                        var iterator = resultSet.iterator();
+                        while (iterator.hasNext()) {
+                            var row = iterator.next();
+                            var record = {
+                                id: row.getString('result_id') || '',
+                                surname: row.getString('result_surname') || '',
+                                first_name: row.getString('result_first_name') || '',
+                                last_name: row.getString('result_last_name') || '',
+                                other_name: row.getString('result_other_name') || '',
+                                date_of_birth: row.getString('result_date_of_birth') || '',
+                                district: row.getString('result_district') || '',
+                                county: row.getString('result_county') || '',
+                                sub_county: row.getString('result_sub_county') || '',
+                                parish: row.getString('result_parish') || '',
+                                village: row.getString('result_village') || '',
+                                expiry_date: row.getString('result_expiry_date') || ''
+                            };
+                            results.push(record);
+                        }
+                    }
+                    mc.setProperty('query_results', JSON.stringify(results));
+                    // Store result set status for logging
+                    mc.setProperty('result_set_status', resultSet ? 'non-null' : 'null');
+                ]]>
+            </script>
+            <!-- Log the processed results and result set status -->
+            <log level="custom">
+                <property name="ResultSetStatus" expression="$ctx:result_set_status"/>
+                <property name="QueryResults" expression="$ctx:query_results"/>
+            </log>
+            <!-- Construct the response payload -->
+            <payloadFactory media-type="json">
+                <format>
+                    {
+                    "status": "success",
+                    "message": "Retrieved all national IDs",
+                    "response": $1
+                    }
+                </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:query_results"/>
+                </args>
+            </payloadFactory>
+            <!-- Send the response back to the client -->
+            <respond/>
+        </inSequence>
+        <faultSequence>
+            <!-- Log error -->
+            <log level="custom">
+                <property name="Error" value="Failed to retrieve national IDs"/>
+                <property name="ErrorMessage" expression="$ctx:ERROR_MESSAGE"/>
+            </log>
+            <!-- Respond with error -->
+            <payloadFactory media-type="json">
+                <format>{"status":"error","message":"$1"}</format>
+                <args>
+                    <arg expression="$ctx:ERROR_MESSAGE"/>
+                </args>
+            </payloadFactory>
+            <respond/>
+        </faultSequence>
+    </resource>
+</api>

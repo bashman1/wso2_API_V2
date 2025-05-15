@@ -1,0 +1,10 @@
+---
+key: "Wso2APIDemo-1.0.0"
+name : "Wso2APIDemo"
+displayName : "Wso2APIDemo"
+description: "Wso2APIDemo"
+version: "1.0.0"
+serviceUrl: "https://{MI_HOST}:{MI_PORT}/wso2apidemo"
+definitionType: "OAS3"
+securityType: "BASIC"
+mutualSSLEnabled: false
