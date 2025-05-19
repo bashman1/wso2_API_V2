@@ -38,17 +38,16 @@
             <!-- /Data service start -->
             <!-- <property name="result_id" expression="json-eval($.result.nin)" scope="default"/> -->
             <!-- Add Accept header -->
-            <header name="Accept" value="application/json" scope="transport"/>
+            <!-- <header name="Accept" value="application/json" scope="transport"/> -->
             <!-- Call DataService endpoint -->
-            <call>
+            <!-- <call>
                 <endpoint>
                     <http uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX8" method="GET"/>
                 </endpoint>
-            </call>
+            </call> -->
             <!-- Create full URL in a property -->
             <!-- <property name="data_service_url" expression="fn:concat('http://localhost:8290/services/CustomerDataService/Citizen/', $ctx:nin)" scope="default" type="STRING"/> -->
             <!-- <property name="data_service_url" expression="fn:concat('http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX8')" scope="default" type="STRING"/> -->
-
             <!-- Call DataService endpoint -->
             <!-- <call>
                 <endpoint>
@@ -56,7 +55,36 @@
                 </endpoint>
             </call> -->
             <!-- Extract result from response body -->
-            <property name="result_id" expression="json-eval($.result.nin)" scope="default"/>
+            <!-- <property name="result_id" expression="json-eval($.result.nin)" scope="default"/> -->
+            <!-- Call the backend -->
+            <!-- <call>
+                <endpoint>
+                    <http method="GET" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/{nin}">
+                        <uri-template-parameter name="nin" expression="json-eval($.nin)"/>
+                    </http>
+                </endpoint>
+            </call> -->
+            <!-- <property name="nin" value="CMRSOE3VZX3CRX2" scope="default"/>
+            <property name="endpointURL" expression="fn:concat('http://localhost:8290/services/CustomerDataService/Citizen/', get-property('nin'))" scope="default"/>
+            <send>
+                <endpoint>
+                    <address uri="{get-property('endpointURL')}"/>
+                </endpoint>
+            </send>
+
+             <property name="result_id" expression="//ns:nin/text()" xmlns:ns="http://ws.wso2.org/dataservice/get_citizennin_query" scope="default"/> -->
+            <property name="uri.var.nin" value="CMRSOE3VZX3CRX" scope="default"/>
+            <call>
+                <endpoint>
+                    <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/{uri.var.nin}"/> -->
+                    <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX"/>
+                </endpoint>
+            </call>
+            <!-- Extract result -->
+            <property name="result_id" expression="//ns:nin/text()" xmlns:ns="http://ws.wso2.org/dataservice/get_citizennin_query" scope="default"/>
+            <log level="full">
+                <property name="NIN Value" expression="$ctx:result_id"/>
+            </log>
             <log level="full">
                 <property name="nin-value" expression="$ctx:nin"/>
             </log>
