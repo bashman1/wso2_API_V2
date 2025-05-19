@@ -39,15 +39,44 @@ pipeline {
         stage('Health Check') {
             steps {
                 bat 'ping 127.0.0.1 -n 20 > nul'
-                // bat 'timeout /T 20 /NOBREAK'
+
                 bat '''
-    curl -v http://localhost:8290/wso2apidemo/createCustomer || (
-        echo "Health check failed" && exit /b 1
-    )
-'''
-            // bat 'curl http://localhost:8290/wso2apidemo/createCustomer || echo "Health check failed (optional)"'
+        cmd /V:ON /C "
+        set RETRIES=5
+        set DELAY=10
+        for /L %%i in (1,1,!RETRIES!) do (
+            echo Attempt %%i: Checking service...
+            curl -s -o nul -w %%{http_code} http://localhost:8290/wso2apidemo/createCustomer > status.txt
+            set /p STATUS=<status.txt
+            echo HTTP status: !STATUS!
+            if "!STATUS!" == "200" (
+                echo Health check passed.
+                exit /b 0
+            )
+            timeout /T !DELAY! > nul
+        )
+        echo Health check failed after !RETRIES! attempts.
+        exit /b 1
+        "
+        '''
+
+                // Optional: show logs if health check fails
+                bat "docker logs ${CONTAINER_NAME}"
             }
         }
+
+    //         stage('Health Check') {
+    //             steps {
+    //                 bat 'ping 127.0.0.1 -n 20 > nul'
+    //                 // bat 'timeout /T 20 /NOBREAK'
+    //                 bat '''
+    //     curl -v http://localhost:8290/wso2apidemo/createCustomer || (
+    //         echo "Health check failed" && exit /b 1
+    //     )
+    // '''
+    //             // bat 'curl http://localhost:8290/wso2apidemo/createCustomer || echo "Health check failed (optional)"'
+    //             }
+    //         }
     }
 
     post {
