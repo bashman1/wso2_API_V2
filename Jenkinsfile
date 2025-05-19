@@ -38,7 +38,8 @@ pipeline {
 
         stage('Health Check') {
             steps {
-                bat 'timeout /T 20 /NOBREAK'
+                bat 'ping 127.0.0.1 -n 20 > nul'
+                // bat 'timeout /T 20 /NOBREAK'
                 bat 'curl http://localhost:8290/wso2apidemo/createCustomer || echo "Health check failed (optional)"'
             }
         }
