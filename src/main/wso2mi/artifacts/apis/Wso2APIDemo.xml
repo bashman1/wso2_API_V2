@@ -5,11 +5,11 @@
             <!-- checking for the nin from niira -->
             <!-- <property name="nin" expression="json-eval($.nin)" scope="default"/> -->
             <property name="nin" expression="json-eval($.nin)" scope="default"/>
-            <!-- <dblookup>
+            <dblookup>
                 <connection>
                     <pool>
                         <driver>org.postgresql.Driver</driver>
-                        <url>jdbc:postgresql://localhost:5432/niira?currentSchema=public</url>
+                        <url>jdbc:postgresql://host.docker.internal:5432/niira?currentSchema=public</url>
                         <user>postgres</user>
                         <password>postgres</password>
                         <property name="validationquery" value=""/>
@@ -22,7 +22,7 @@
                     <parameter expression="$ctx:nin" type="VARCHAR"/>
                     <result column="nin_exists" name="result_id"/>
                 </statement>
-            </dblookup> -->
+            </dblookup>
             <!-- <http.get configKey="DataService">
                 <relativePath>services/CustomerDataService/Citizen/{$ctx:nin}
                 </relativePath>
@@ -73,15 +73,20 @@
             </send>
 
              <property name="result_id" expression="//ns:nin/text()" xmlns:ns="http://ws.wso2.org/dataservice/get_citizennin_query" scope="default"/> -->
-            <property name="uri.var.nin" value="CMRSOE3VZX3CRX" scope="default"/>
-            <call>
-                <endpoint>
+            <!-- <property name="uri.var.nin" value="CMRSOE3VZX3CRX" scope="default"/> -->
+            <!-- <property name="Accept" value="application/json" scope="axis2" type="STRING"/> -->
+
+            <!-- <call>
+                <endpoint> -->
                     <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/{uri.var.nin}"/> -->
-                    <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX"/>
+                    <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX"/>
                 </endpoint>
-            </call>
+            </call> -->
             <!-- Extract result -->
-            <property name="result_id" expression="//ns:nin/text()" xmlns:ns="http://ws.wso2.org/dataservice/get_citizennin_query" scope="default"/>
+            <!-- <property name="messageType" value="application/json" scope="axis2"/>
+            <property name="result_id" expression="json-eval($.results.nin)" scope="default"/> -->
+
+
             <log level="full">
                 <property name="NIN Value" expression="$ctx:result_id"/>
             </log>
