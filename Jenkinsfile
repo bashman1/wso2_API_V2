@@ -16,11 +16,11 @@ pipeline {
     }
 
     stages {
-        stage('Clone from Gogs') {
-            steps {
-                git credentialsId: "${CREDENTIALS_ID}", url: "${GIT_REPO}"
-            }
-        }
+        // stage('Clone from Gogs') {
+        //     steps {
+        //         git credentialsId: "${CREDENTIALS_ID}", url: "${GIT_REPO}"
+        //     }
+        // }
 
         stage('Build Project') {
             steps {
