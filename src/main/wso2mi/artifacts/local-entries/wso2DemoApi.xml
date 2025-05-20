@@ -2,8 +2,8 @@
 <localEntry key="wso2DemoApi" xmlns="http://ws.apache.org/ns/synapse">
   <http.init>
     <connectionType>HTTP</connectionType>
-    <!-- <baseUrl>http://host.docker.internal:8081</baseUrl> -->
-    <baseUrl>http://localhost:8081</baseUrl>
+    <baseUrl>http://host.docker.internal:8081</baseUrl>
+    <!-- <baseUrl>http://localhost:8081</baseUrl> -->
     <authType>None</authType>
     <timeoutAction>Never</timeoutAction>
     <retryCount>0</retryCount>
