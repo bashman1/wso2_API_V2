@@ -5,6 +5,7 @@
             <!-- checking for the nin from niira -->
             <!-- <property name="nin" expression="json-eval($.nin)" scope="default"/> -->
             <property name="nin" expression="json-eval($.nin)" scope="default"/>
+            <property name="originalPayload" expression="json-eval($)" scope="default"/>
             <!-- <dblookup>
                 <connection>
                     <pool>
@@ -76,19 +77,15 @@
              <property name="result_id" expression="//ns:nin/text()" xmlns:ns="http://ws.wso2.org/dataservice/get_citizennin_query" scope="default"/> -->
             <!-- <property name="uri.var.nin" value="CMRSOE3VZX3CRX" scope="default"/> -->
             <!-- <property name="Accept" value="application/json" scope="axis2" type="STRING"/> -->
-
             <!-- <call>
                 <endpoint> -->
-                    <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/{uri.var.nin}"/> -->
-                    <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX"/>
+            <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/{uri.var.nin}"/> -->
+            <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX"/>
                 </endpoint>
             </call> -->
             <!-- Extract result -->
             <!-- <property name="messageType" value="application/json" scope="axis2"/>
             <property name="result_id" expression="json-eval($.results.nin)" scope="default"/> -->
-
-
-        
             <payloadFactory media-type="xml">
                 <format>
                     <![CDATA[
@@ -106,24 +103,16 @@
                     <arg evaluator="xml" expression="$ctx:nin"/>
                 </args>
             </payloadFactory>
-
-
-                        <call>
+            <call>
                 <endpoint>
                     <address uri="http://localhost:8290/services/CustomerDataService.SOAP11Endpoint"/>
                 </endpoint>
             </call>
-
             <!-- Extract the <nin> result -->
             <property name="result_id" expression="//ns:nin" xmlns:ns="http://ws.wso2.org/dataservice/getcitizenbynin_query" scope="default"/>
-
-
-               <log level="full">
+            <log level="full">
                 <property name="TESTING SOAP REQUEST" expression="get-property('result_id')"/>
             </log>
-            
-
-
             <log level="full">
                 <property name="NIN Value" expression="$ctx:result_id"/>
             </log>
@@ -132,14 +121,20 @@
             </log>
             <filter xpath="string($ctx:result_id) = 'true'">
                 <then>
-                    <enrich>
+                    <payloadFactory media-type="json">
+                        <format>$1</format>
+                        <args>
+                            <arg expression="get-property('originalPayload')"/>
+                        </args>
+                    </payloadFactory>
+                    <!-- <enrich>
                         <source clone="true" type="body"/>
                         <target type="property" property="origPayload"/>
                     </enrich>
                     <enrich>
                         <source type="property" property="origPayload"/>
                         <target type="body"/>
-                    </enrich>
+                    </enrich> -->
                     <!-- correct nin -->
                     <variable name="post_data" type="JSON" expression="${payload}"/>
                     <http.post configKey="wso2DemoApi">
@@ -147,6 +142,7 @@
                         <headers>[]</headers>
                         <requestBodyType>JSON</requestBodyType>
                         <requestBodyJson>${payload}</requestBodyJson>
+                        <!-- <requestBodyJson>$ctx:originalPayload</requestBodyJson> -->
                         <forceScAccepted>false</forceScAccepted>
                         <disableChunking>false</disableChunking>
                         <forceHttp10>false</forceHttp10>
