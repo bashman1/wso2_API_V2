@@ -3,7 +3,6 @@
     <resource methods="POST" uri-template="/createCustomer">
         <inSequence>
             <!-- checking for the nin from niira -->
-            <!-- <property name="nin" expression="json-eval($.nin)" scope="default"/> -->
             <property name="nin" expression="json-eval($.nin)" scope="default"/>
             <property name="originalPayload" expression="json-eval($)" scope="default"/>
             <!-- <dblookup>
@@ -25,66 +24,9 @@
                     <result column="nin_exists" name="result_id"/>
                 </statement>
             </dblookup> -->
-            <!-- <http.get configKey="DataService">
-                <relativePath>services/CustomerDataService/Citizen/{$ctx:nin}
-                </relativePath>
-                <headers>[["Accept","application/json"],]</headers>
-                <forceScAccepted>false</forceScAccepted>
-                <disableChunking>false</disableChunking>
-                <forceHttp10>false</forceHttp10>
-                <noKeepAlive>false</noKeepAlive>
-                <responseVariable>http_get_1</responseVariable>
-                <overwriteBody>true</overwriteBody>
-            </http.get> -->
-            <!-- Data service start -->
-            <!-- /Data service start -->
-            <!-- <property name="result_id" expression="json-eval($.result.nin)" scope="default"/> -->
-            <!-- Add Accept header -->
-            <!-- <header name="Accept" value="application/json" scope="transport"/> -->
-            <!-- Call DataService endpoint -->
-            <!-- <call>
-                <endpoint>
-                    <http uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX8" method="GET"/>
-                </endpoint>
-            </call> -->
-            <!-- Create full URL in a property -->
-            <!-- <property name="data_service_url" expression="fn:concat('http://localhost:8290/services/CustomerDataService/Citizen/', $ctx:nin)" scope="default" type="STRING"/> -->
-            <!-- <property name="data_service_url" expression="fn:concat('http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX8')" scope="default" type="STRING"/> -->
-            <!-- Call DataService endpoint -->
-            <!-- <call>
-                <endpoint>
-                    <http uri-template="{$ctx:data_service_url}" method="GET"/>
-                </endpoint>
-            </call> -->
-            <!-- Extract result from response body -->
-            <!-- <property name="result_id" expression="json-eval($.result.nin)" scope="default"/> -->
-            <!-- Call the backend -->
-            <!-- <call>
-                <endpoint>
-                    <http method="GET" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/{nin}">
-                        <uri-template-parameter name="nin" expression="json-eval($.nin)"/>
-                    </http>
-                </endpoint>
-            </call> -->
-            <!-- <property name="nin" value="CMRSOE3VZX3CRX2" scope="default"/>
-            <property name="endpointURL" expression="fn:concat('http://localhost:8290/services/CustomerDataService/Citizen/', get-property('nin'))" scope="default"/>
-            <send>
-                <endpoint>
-                    <address uri="{get-property('endpointURL')}"/>
-                </endpoint>
-            </send>
-
-             <property name="result_id" expression="//ns:nin/text()" xmlns:ns="http://ws.wso2.org/dataservice/get_citizennin_query" scope="default"/> -->
-            <!-- <property name="uri.var.nin" value="CMRSOE3VZX3CRX" scope="default"/> -->
-            <!-- <property name="Accept" value="application/json" scope="axis2" type="STRING"/> -->
-            <!-- <call>
-                <endpoint> -->
-            <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/{uri.var.nin}"/> -->
-            <!-- <http method="get" uri-template="http://localhost:8290/services/CustomerDataService/Citizen/CMRSOE3VZX3CRX"/>
-                </endpoint>
-            </call> -->
+       
             <!-- Extract result -->
-            <!-- <property name="messageType" value="application/json" scope="axis2"/>
+            <!-- 
             <property name="result_id" expression="json-eval($.results.nin)" scope="default"/> -->
             <payloadFactory media-type="xml">
                 <format>
@@ -127,22 +69,13 @@
                             <arg expression="get-property('originalPayload')"/>
                         </args>
                     </payloadFactory>
-                    <!-- <enrich>
-                        <source clone="true" type="body"/>
-                        <target type="property" property="origPayload"/>
-                    </enrich>
-                    <enrich>
-                        <source type="property" property="origPayload"/>
-                        <target type="body"/>
-                    </enrich> -->
-                    <!-- correct nin -->
+                 
                     <variable name="post_data" type="JSON" expression="${payload}"/>
                     <http.post configKey="wso2DemoApi">
                         <relativePath>/createCustomer</relativePath>
                         <headers>[]</headers>
                         <requestBodyType>JSON</requestBodyType>
                         <requestBodyJson>${payload}</requestBodyJson>
-                        <!-- <requestBodyJson>$ctx:originalPayload</requestBodyJson> -->
                         <forceScAccepted>false</forceScAccepted>
                         <disableChunking>false</disableChunking>
                         <forceHttp10>false</forceHttp10>
@@ -158,7 +91,6 @@
                     <variable name="customer_created" type="JSON" expression="${payload}"/>
                     <filter xpath="get-property('HTTP_STATUS_CODE') = '201'">
                         <then>
-                            <!-- call the next api -->
                             <payloadFactory media-type="json" template-type="default">
                                 <format>{
                                     "currency": "UGX",
@@ -306,22 +238,6 @@
             </filter>
             <!-- /end checking for the nin from niira -->
         </inSequence>
-        <!-- <faultSequence>
-            <log level="full">
-                <property name="ERROR" expression="get-property('ERROR_MESSAGE')"/>
-            </log>
-            <payloadFactory media-type="json">
-                <format>
-                    {
-                    "status": "FAILED",
-                    "message": "Connection failure. system is unavailable",
-                    }
-                </format>
-                <args/>
-            </payloadFactory>
-            <property name="HTTP_SC" value="500" scope="axis2"/>
-            <respond/>
-        </faultSequence> -->
         <faultSequence xmlns="http://ws.apache.org/ns/synapse">
             <log level="full">
                 <property name="ERROR_MESSAGE" expression="get-property('ERROR_MESSAGE')"/>
