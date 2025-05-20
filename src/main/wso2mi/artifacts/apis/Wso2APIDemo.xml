@@ -5,11 +5,12 @@
             <!-- checking for the nin from niira -->
             <!-- <property name="nin" expression="json-eval($.nin)" scope="default"/> -->
             <property name="nin" expression="json-eval($.nin)" scope="default"/>
-            <dblookup>
+            <!-- <dblookup>
                 <connection>
                     <pool>
                         <driver>org.postgresql.Driver</driver>
-                        <url>jdbc:postgresql://host.docker.internal:5432/niira?currentSchema=public</url>
+                         <url>jdbc:postgresql://host.docker.internal:5432/niira?currentSchema=public</url>
+                        <url>jdbc:postgresql://localhost:5432/niira?currentSchema=public</url>
                         <user>postgres</user>
                         <password>postgres</password>
                         <property name="validationquery" value=""/>
@@ -22,7 +23,7 @@
                     <parameter expression="$ctx:nin" type="VARCHAR"/>
                     <result column="nin_exists" name="result_id"/>
                 </statement>
-            </dblookup>
+            </dblookup> -->
             <!-- <http.get configKey="DataService">
                 <relativePath>services/CustomerDataService/Citizen/{$ctx:nin}
                 </relativePath>
@@ -85,6 +86,42 @@
             <!-- Extract result -->
             <!-- <property name="messageType" value="application/json" scope="axis2"/>
             <property name="result_id" expression="json-eval($.results.nin)" scope="default"/> -->
+
+
+        
+            <payloadFactory media-type="xml">
+                <format>
+                    <![CDATA[
+                    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:get="http://ws.wso2.org/dataservice">
+                       <soapenv:Header/>
+                       <soapenv:Body>
+                          <get:GET_Citizen_By_NIN>
+                             <get:nin>$1</get:nin>
+                          </get:GET_Citizen_By_NIN>
+                       </soapenv:Body>
+                    </soapenv:Envelope>
+                    ]]>
+                </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:nin"/>
+                </args>
+            </payloadFactory>
+
+
+                        <call>
+                <endpoint>
+                    <address uri="http://localhost:8290/services/CustomerDataService.SOAP11Endpoint"/>
+                </endpoint>
+            </call>
+
+            <!-- Extract the <nin> result -->
+            <property name="result_id" expression="//ns:nin" xmlns:ns="http://ws.wso2.org/dataservice/getcitizenbynin_query" scope="default"/>
+
+
+               <log level="full">
+                <property name="TESTING SOAP REQUEST" expression="get-property('result_id')"/>
+            </log>
+            
 
 
             <log level="full">

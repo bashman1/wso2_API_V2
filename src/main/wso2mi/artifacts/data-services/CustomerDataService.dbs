@@ -2,7 +2,8 @@
     <description/>
   <config id="CustomerDataSource" >
     <property name="driverClassName">org.postgresql.Driver</property>
-    <property name="url">jdbc:postgresql://host.docker.internal:5432/niira</property>
+    <!-- <property name="url">jdbc:postgresql://host.docker.internal:5432/niira</property> -->
+    <property name="url">jdbc:postgresql://localhost:5432/niira</property>
     <property name="username">postgres</property>
     <property name="password">postgres</property>
     </config>
@@ -21,9 +22,46 @@
             <property name="forceJDBCBatchRequests">false</property>
         </properties>
     </query>
-    <resource method="GET" path="Citizen/{NIN}" disableStreaming="true">
+    <!-- <resource method="GET" path="Citizen/{NIN}" disableStreaming="true">
         <call-query href="get_citizennin_query">
             <with-param name="nin" query-param="NIN"/>
         </call-query>
-    </resource>
+    </resource> -->
+
+    <!-- Start of operations -->
+    <!-- <operation name="GET_Citizen_By_NIN">
+    <target>
+        <in-sequence>
+            <call-query href="get_citizennin_query">
+                <with-param name="nin" query-param="uri.var.NIN"/>
+            </call-query>
+        </in-sequence>
+        <out-sequence/>
+        <fault-sequence/>
+    </target>
+</operation> -->
+
+<!-- End of operations -->
+    <query id="getcitizenbynin_query" useConfig="CustomerDataSource">
+        <sql>SELECT EXISTS ( SELECT 1 FROM identity_cards WHERE nin = :nin ) AS nin</sql>
+            <param name="nin" paramType="SCALAR" sqlType="STRING" type="IN"/>
+            <!-- <param name="nin" paramType="SCALAR" sqlType="STRING" type="IN"/> -->
+    <result outputType="json">
+        {
+            "results": {
+                "nin": "$nin"
+            }
+        }
+    </result>
+        <properties>
+            <property name="fetchDirection">forward</property>
+            <property name="forceStoredProc">false</property>
+            <property name="forceJDBCBatchRequests">false</property>
+        </properties>
+    </query>
+    <operation name="GET_Citizen_By_NIN" disableStreaming="true">
+        <call-query href="getcitizenbynin_query">
+        <with-param name="nin" query-param="nin"/>
+    </call-query>
+    </operation>
 </data>

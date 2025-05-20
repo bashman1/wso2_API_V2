@@ -70,8 +70,8 @@ exit /b 1"
     post {
         always {
             echo 'Cleaning up Docker...'
-            bat "docker stop ${CONTAINER_NAME} || exit 0"
-            bat "docker rm ${CONTAINER_NAME} || exit 0"
+            // bat "docker stop ${CONTAINER_NAME} || exit 0"
+            // bat "docker rm ${CONTAINER_NAME} || exit 0"
         }
     }
 }
